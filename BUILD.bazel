@@ -1,0 +1,23 @@
+"""Build configuration for Helm tools."""
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "defs.bzl",
+    "extensions.bzl",
+])
+
+# Export the helm wrapper binary
+alias(
+    name = "helm_wrapper",
+    actual = "//cmd/helm_wrapper",
+    visibility = ["//visibility:public"],
+)
+
+# Documentation
+filegroup(
+    name = "docs",
+    srcs = [
+        "README.md",
+    ],
+)

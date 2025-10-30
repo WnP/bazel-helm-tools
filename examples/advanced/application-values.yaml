@@ -1,0 +1,34 @@
+appName: webapp
+replicaCount: 2
+
+image:
+  repository: nginx
+  tag: "1.25-alpine"
+
+service:
+  port: 80
+  targetPort: 80
+  type: LoadBalancer
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: webapp.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80

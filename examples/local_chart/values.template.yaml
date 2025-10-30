@@ -1,0 +1,19 @@
+# Template values file for demonstration
+replicaCount: 3
+
+image:
+  repository: myapp
+  tag: "{{VERSION}}"  # Will be replaced by genrule
+  pullPolicy: Always
+
+service:
+  type: LoadBalancer
+  port: 80
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi

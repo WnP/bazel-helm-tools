@@ -1,0 +1,49 @@
+"""Basic example of using helm_tools with local charts.
+
+This example shows the simplest way to deploy a local Helm chart.
+For Git-based charts, see the git_integration example.
+"""
+
+load("@helm_tools//:defs.bzl", "helm_release")
+
+# Simple local chart deployment
+helm_release(
+    name = "simple_app",
+    chart = "//examples/local_chart:chart",  # Reference to a local chart
+    namespace = "default",
+    release_name = "simple-app",  # Release names must use hyphens, not underscores
+)
+
+# Deployment with custom values
+helm_release(
+    name = "configured_app",
+    timeout = "5m",
+    chart = "//examples/local_chart:chart",
+    create_namespace = True,
+    namespace = "staging",
+    values_file = ":custom-values.yaml",
+    wait = True,
+    release_name = "configured-app",  # Release names must use hyphens, not underscores
+)
+
+# Production deployment with strict settings
+helm_release(
+    name = "production_app",
+    timeout = "10m",
+    atomic = True,  # Rollback on failure
+    chart = "//examples/local_chart:chart",
+    create_namespace = True,
+    namespace = "production",
+    tags = [
+        "manual",
+        "production",
+    ],  # Require manual deployment
+    values_file = ":production-values.yaml",
+    wait = True,
+    release_name = "production-app",  # Release names must use hyphens, not underscores
+)
+
+exports_files([
+    "custom-values.yaml",
+    "production-values.yaml",
+])

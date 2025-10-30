@@ -1,0 +1,31 @@
+# PostgreSQL Helm Chart Values
+# Example configuration for PostgreSQL deployment
+
+auth:
+  enablePostgresUser: true
+  postgresPassword: "SecurePassword123!"
+  database: "myapp"
+  username: "appuser"
+  password: "AppPassword456!"
+
+primary:
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: "standard"
+
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "250m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: false
+
+backup:
+  enabled: false

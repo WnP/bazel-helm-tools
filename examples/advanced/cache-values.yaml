@@ -1,0 +1,25 @@
+appName: redis
+replicaCount: 1
+
+image:
+  repository: redis
+  tag: "7-alpine"
+
+service:
+  port: 6379
+  type: ClusterIP
+
+redis:
+  auth:
+    enabled: false
+  
+persistence:
+  enabled: false
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

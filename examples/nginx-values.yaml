@@ -1,0 +1,36 @@
+# NGINX Helm Chart Values
+# Example configuration for NGINX deployment
+
+replicaCount: 2
+
+service:
+  type: LoadBalancer
+  port: 80
+  httpsPort: 443
+
+ingress:
+  enabled: false
+
+resources:
+  requests:
+    memory: "128Mi"
+    cpu: "100m"
+  limits:
+    memory: "256Mi"
+    cpu: "200m"
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+
+serverBlock: |-
+  server {
+      listen 8080;
+      server_name _;
+      location / {
+          return 200 "Hello from NGINX deployed via Bazel!";
+          add_header Content-Type text/plain;
+      }
+  }

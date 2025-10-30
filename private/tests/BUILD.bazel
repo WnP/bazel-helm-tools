@@ -1,0 +1,50 @@
+"""Build configuration for Helm tools tests."""
+
+load(":implementation_test.bzl", "implementation_test_suite")
+load(":providers_test.bzl", "providers_test_suite")
+load(":repository_providers_test.bzl", "repository_providers_test_suite")
+load(":repository_validation_test.bzl", "repository_validation_test_suite")
+load(":utils_test.bzl", "utils_test_suite")
+load(":validation_test.bzl", "validation_test_suite")
+
+package(default_visibility = ["//visibility:public"])
+
+# Export test helpers
+exports_files(["test_helpers.bzl"])
+
+# Individual test suites
+validation_test_suite(name = "validation_tests")
+
+providers_test_suite(name = "providers_tests")
+
+implementation_test_suite(name = "implementation_tests")
+
+utils_test_suite(name = "utils_tests")
+
+repository_validation_test_suite(name = "repository_validation_tests")
+
+repository_providers_test_suite(name = "repository_providers_tests")
+
+# Combined test suite
+test_suite(
+    name = "all_tests",
+    tests = [
+        ":implementation_tests",
+        ":providers_tests",
+        ":repository_providers_tests",
+        ":repository_validation_tests",
+        ":utils_tests",
+        ":validation_tests",
+    ],
+    visibility = ["//visibility:public"],
+)
+
+# Repository-specific test suite
+test_suite(
+    name = "repository_tests",
+    tests = [
+        ":repository_providers_tests",
+        ":repository_validation_tests",
+    ],
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,30 @@
+"""Helm tools module for managing Helm charts in Bazel."""
+
+module(
+    name = "helm_tools",
+    version = "1.0.0",
+)
+
+bazel_dep(name = "platforms", version = "0.0.11")
+bazel_dep(name = "bazel_skylib", version = "1.8.0")
+bazel_dep(name = "rules_shell", version = "0.3.0")
+bazel_dep(name = "rules_go", version = "0.50.0")
+bazel_dep(name = "gazelle", version = "0.39.0")
+
+# Go dependencies for helm_wrapper
+go_deps = use_extension("@gazelle//:extensions.bzl", "go_deps")
+
+# Declare yaml.v3 dependency for Chart.yaml parsing
+go_deps.module(
+    path = "gopkg.in/yaml.v3",
+    sum = "h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=",
+    version = "v3.0.1",
+)
+use_repo(go_deps, "in_gopkg_yaml_v3")
+
+# Configure Helm
+helm = use_extension("@helm_tools//:extensions.bzl", "helm")
+helm.configure(
+    version = "v3.13.3",
+)
+use_repo(helm, "helm_binary")

@@ -1,0 +1,23 @@
+"""Example MODULE.bazel configuration for using helm_tools.
+
+This example demonstrates how to configure Helm binary version using the
+module extension system.
+"""
+
+module(
+    name = "my_project",
+    version = "0.1.0",
+)
+
+bazel_dep(name = "helm_tools", version = "0.1.0")
+local_path_override(
+    module_name = "helm_tools",
+    path = "../",
+)
+
+# Configure Helm binary version
+helm = use_extension("@helm_tools//:extensions.bzl", "helm")
+helm.configure(
+    version = "v3.13.3",
+)
+use_repo(helm, "helm_binary")

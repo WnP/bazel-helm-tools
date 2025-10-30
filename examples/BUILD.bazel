@@ -1,0 +1,110 @@
+"""Example BUILD file demonstrating helm_tools with repository support.
+
+This example shows various ways to deploy Helm charts from repositories.
+"""
+
+load("@helm_tools//:defs.bzl", "helm_repository", "helm_release")
+
+# Define repositories first (required for HTTP/HTTPS)
+helm_repository(
+    name = "bitnami_repo",
+    url = "https://charts.bitnami.com/bitnami",
+)
+
+helm_repository(
+    name = "prometheus_repo",
+    url = "https://prometheus-community.github.io/helm-charts",
+)
+
+helm_repository(
+    name = "nginx_ingress_repo",
+    url = "https://kubernetes.github.io/ingress-nginx",
+)
+
+# Example 1: Deploy NGINX from Bitnami repository
+helm_release(
+    name = "nginx",
+    timeout = "5m",
+    chart = "nginx",
+    chart_version = "13.2.10",
+    create_namespace = True,
+    namespace = "web",
+    repo_name = ":bitnami_repo",  # Reference the repository
+    wait = True,
+)
+
+# Example 2: Deploy Prometheus Stack (latest version)
+helm_release(
+    name = "prometheus",
+    timeout = "10m",
+    atomic = True,
+    chart = "kube-prometheus-stack",
+    create_namespace = True,
+    namespace = "monitoring",
+    repo_name = ":prometheus_repo",  # Reference the repository
+    wait = True,
+)
+
+# Example 3: Deploy Ingress NGINX Controller
+helm_release(
+    name = "ingress",
+    chart = "ingress-nginx",
+    chart_version = "4.4.0",
+    create_namespace = True,
+    namespace = "ingress-nginx",
+    repo_name = ":nginx_ingress_repo",  # Reference the repository
+    wait = True,
+)
+
+# Example 4: Deploy PostgreSQL with custom values
+helm_release(
+    name = "postgres",
+    atomic = True,
+    chart = "postgresql",
+    chart_version = "12.1.9",
+    create_namespace = True,
+    namespace = "database",
+    repo_name = ":bitnami_repo",  # Reference the repository
+    values_file = ":postgres-values.yaml",
+    wait = True,
+)
+
+# Example 5: Deploy Redis cluster
+helm_release(
+    name = "redis",
+    chart = "redis",
+    chart_version = "17.3.14",
+    create_namespace = True,
+    force = True,  # Force resource updates
+    namespace = "cache",
+    repo_name = ":bitnami_repo",  # Reference the repository
+    wait = True,
+)
+
+# Example 6: OCI Registry (can use repo_url directly)
+helm_release(
+    name = "oci-chart",
+    chart = "my-chart",
+    repo_url = "oci://ghcr.io/example/charts",  # OCI URLs work directly
+    chart_version = "1.0.0",
+    namespace = "production",
+    wait = True,
+)
+
+# Example 7: Local chart
+helm_release(
+    name = "local-app",
+    chart = "//examples/local_chart:chart",  # Local path
+    namespace = "default",
+    values_file = ":local-app-values.yaml",
+    wait = True,
+)
+
+# Targets generated for each helm_release:
+# - bazel run //:nginx_install       # Install NGINX
+# - bazel run //:nginx_upgrade       # Upgrade NGINX
+# - bazel run //:nginx_uninstall     # Uninstall NGINX
+# - bazel run //:nginx_status        # Check NGINX status
+# - bazel run //:nginx_values        # Get NGINX values
+#
+# Same pattern for prometheus, ingress, postgres, redis, and local_app

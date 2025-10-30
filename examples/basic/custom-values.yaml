@@ -1,0 +1,19 @@
+# Custom values for staging deployment
+replicaCount: 2
+
+image:
+  repository: nginx
+  tag: "1.21"
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8080
+
+resources:
+  limits:
+    cpu: 150m
+    memory: 192Mi
+  requests:
+    cpu: 75m
+    memory: 96Mi

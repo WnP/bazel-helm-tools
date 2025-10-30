@@ -1,0 +1,12 @@
+apiVersion: v2
+name: example-app
+description: A simple example Helm chart for demonstrating local chart deployment
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - example
+  - local
+maintainers:
+  - name: Example Team
+    email: team@example.com

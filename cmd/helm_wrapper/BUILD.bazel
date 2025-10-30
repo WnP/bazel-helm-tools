@@ -1,0 +1,21 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+go_library(
+    name = "helm_wrapper_lib",
+    srcs = ["main.go"],
+    importpath = "github.com/example/helm_tools/cmd/helm_wrapper",
+    visibility = ["//visibility:private"],
+    deps = ["@in_gopkg_yaml_v3//:yaml_v3"],
+)
+
+go_binary(
+    name = "helm_wrapper",
+    embed = [":helm_wrapper_lib"],
+    visibility = ["//visibility:public"],
+)
+
+go_test(
+    name = "helm_wrapper_test",
+    srcs = ["main_test.go"],
+    embed = [":helm_wrapper_lib"],
+)

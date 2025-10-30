@@ -1,0 +1,187 @@
+"""Advanced example showing complex helm_tools patterns.
+
+This example demonstrates:
+- Multiple chart deployments with dependencies
+- Generated charts from templates
+- Multi-environment configurations
+- Integration with other Bazel rules
+"""
+
+load("@helm_tools//:defs.bzl", "helm_release")
+
+# Generate a Chart.yaml dynamically
+genrule(
+    name = "generate_chart",
+    srcs = [],
+    outs = ["generated-chart/Chart.yaml"],
+    cmd = """
+        mkdir -p $(@D)
+        cat > $@ <<EOF
+apiVersion: v2
+name: generated-app
+description: A dynamically generated Helm chart
+type: application
+version: 1.0.0
+appVersion: "$$(date +%Y%m%d)"
+EOF
+    """,
+)
+
+# Generate templates
+genrule(
+    name = "generate_templates",
+    srcs = ["deployment.template.yaml"],
+    outs = [
+        "generated-chart/templates/deployment.yaml",
+        "generated-chart/templates/service.yaml",
+    ],
+    cmd = """
+        mkdir -p $(@D)/generated-chart/templates
+        cp $(location deployment.template.yaml) $(@D)/generated-chart/templates/deployment.yaml
+        cat > $(@D)/generated-chart/templates/service.yaml <<EOF
+apiVersion: v1
+kind: Service
+metadata:
+  name: generated-app
+spec:
+  selector:
+    app: generated-app
+  ports:
+    - port: 80
+      targetPort: 8080
+EOF
+    """,
+)
+
+# Generate values for different environments
+[
+    genrule(
+        name = "values_" + env,
+        srcs = ["values.base.yaml"],
+        outs = ["values." + env + ".yaml"],
+        cmd = """
+            cat $< | sed 's/ENVIRONMENT/%s/g' | sed 's/REPLICAS/%s/g' > $@
+        """ % (env, replicas),
+    )
+    for env, replicas in [
+        ("dev", "1"),
+        ("staging", "2"),
+        ("production", "3"),
+    ]
+]
+
+# Combine generated chart files
+filegroup(
+    name = "generated_chart",
+    srcs = [
+        "generated-chart/values.yaml",  # Static values file
+        ":generate_chart",
+        ":generate_templates",
+    ],
+)
+
+# Deploy to different environments
+[
+    helm_release(
+        name = env + "_deployment",
+        timeout = timeout,
+        atomic = atomic,
+        chart = ":generated_chart",
+        create_namespace = True,
+        namespace = env,
+        tags = tags,
+        values_file = ":values_" + env,
+        wait = wait,
+        release_name = env + "-deployment",  # Release names must use hyphens, not underscores
+    )
+    for env, wait, timeout, atomic, tags in [
+        (
+            "dev",
+            False,
+            "2m",
+            False,
+            ["dev"],
+        ),
+        (
+            "staging",
+            True,
+            "5m",
+            False,
+            ["staging"],
+        ),
+        (
+            "production",
+            True,
+            "10m",
+            True,
+            [
+                "manual",
+                "production",
+            ],
+        ),
+    ]
+]
+
+# Multi-tier application deployment
+helm_release(
+    name = "database",
+    timeout = "5m",
+    chart = "//examples/local_chart:chart",  # Reuse example chart
+    create_namespace = True,
+    namespace = "backend",
+    release_name = "postgres",
+    values_file = ":database-values.yaml",
+    wait = True,
+)
+
+helm_release(
+    name = "cache",
+    timeout = "3m",
+    chart = "//examples/local_chart:chart",  # Reuse example chart
+    namespace = "backend",
+    release_name = "redis",
+    values_file = ":cache-values.yaml",
+    wait = True,
+)
+
+helm_release(
+    name = "application",
+    timeout = "5m",
+    chart = "//examples/local_chart:chart",  # Reuse example chart
+    namespace = "backend",
+    release_name = "webapp",
+    values_file = ":application-values.yaml",
+    wait = True,
+    # This implicitly depends on database and cache being deployed first
+    # due to Bazel's dependency tracking
+)
+
+# Create a deployment pipeline using genrule
+genrule(
+    name = "deploy_all",
+    srcs = [],
+    outs = ["deploy.sh"],
+    cmd = """
+        cat > $@ <<'EOF'
+#!/bin/bash
+set -e
+echo "Deploying multi-tier application..."
+bazel run //examples/advanced:database_install
+bazel run //examples/advanced:cache_install
+bazel run //examples/advanced:application_install
+echo "Deployment complete!"
+EOF
+        chmod +x $@
+    """,
+    executable = True,
+)
+
+# Export all configuration files
+exports_files([
+    "deployment.template.yaml",
+    "values.base.yaml",
+    "generated-chart/values.yaml",
+    "database-values.yaml",
+    "cache-values.yaml",
+    "application-values.yaml",
+])

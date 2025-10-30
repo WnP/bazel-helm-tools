@@ -1,0 +1,24 @@
+appName: generated-app
+environment: development
+
+image:
+  repository: nginx
+  tag: 1.25-alpine
+
+service:
+  port: 80
+  targetPort: 8080
+  type: ClusterIP
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 128Mi
+  requests:
+    cpu: 50m
+    memory: 64Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
