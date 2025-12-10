@@ -28,6 +28,7 @@ def _create_json_config_target(target_def):
         "release_name": target_def.config.release_name,
         "chart": target_def.config.chart if not chart_is_label else "__CHART_PATH__",  # Placeholder for label expansion
         "namespace": target_def.config.namespace,
+        "kube_context": target_def.config.kube_context,
     }
     
     # Add optional fields
@@ -265,6 +266,7 @@ def helm_release(
         repo_url = None,
         repo_name = None,
         chart_version = None,
+        kube_context = None,
         visibility = None,
         tags = None,
         **kwargs):
@@ -291,6 +293,7 @@ def helm_release(
             repo_url = "https://prometheus-community.github.io/helm-charts",
             chart_version = "51.3.0",
             namespace = "monitoring",
+            kube_context = "prod-cluster",
             values_file = ":prometheus-values.yaml",
         )
 
@@ -306,6 +309,7 @@ def helm_release(
             repo_name = ":prometheus_repo",  # Reference the repository target
             chart_version = "51.3.0",
             namespace = "monitoring",
+            kube_context = "prod-cluster",
         )
 
     Example (OCI registry):
@@ -315,6 +319,7 @@ def helm_release(
             repo_url = "oci://ghcr.io/organization/charts",
             chart_version = "1.0.0",
             namespace = "default",
+            kube_context = "staging-cluster",
         )
 
     Example (local chart):
@@ -322,6 +327,7 @@ def helm_release(
             name = "my_app",
             chart = "//charts/my-app",  # Local chart directory
             namespace = "production",
+            kube_context = "prod-cluster",
             values_file = ":values.yaml",
         )
 
@@ -338,6 +344,7 @@ def helm_release(
             name = "cilium",
             chart = ":cilium_repo",  # Archive with Chart.yaml at root
             namespace = "kube-system",
+            kube_context = "prod-cluster",
         )
 
         # If Chart.yaml is at repository root, just clone normally:
@@ -351,6 +358,7 @@ def helm_release(
             name = "my_app",
             chart = ":my_chart",
             namespace = "default",
+            kube_context = "staging-cluster",
         )
 
     Args:
@@ -368,6 +376,7 @@ def helm_release(
         repo_url: Repository URL for Helm charts (optional, e.g. "https://charts.bitnami.com/bitnami")
         repo_name: Reference to helm_repository target (optional, mutually exclusive with repo_url)
         chart_version: Specific chart version to install (optional, defaults to latest)
+        kube_context: Kubernetes context name (REQUIRED) - The kubectl context to use for all operations
         visibility: Target visibility
         tags: Additional tags for targets
         **kwargs: Additional arguments passed to sh_binary rules
@@ -390,6 +399,7 @@ def helm_release(
         repo_url = repo_url,
         repo_name = repo_name,
         chart_version = chart_version,
+        kube_context = kube_context,
         visibility = visibility,
         tags = tags,
         kwargs = kwargs,

@@ -8,6 +8,7 @@ helm_release(
     timeout = "5m",
     chart = ":chart",  # Reference to local chart directory
     create_namespace = True,
+    kube_context = "minikube",
     namespace = "local-example",
     values_file = ":values.yaml",
     wait = True,
@@ -29,6 +30,7 @@ helm_release(
     atomic = True,  # Rollback on failure
     chart = ":chart",
     create_namespace = True,
+    kube_context = "minikube",
     namespace = "templated-example",
     values_file = ":generate_values",
     release_name = "templated-app",  # Release names must use hyphens, not underscores

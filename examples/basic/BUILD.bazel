@@ -11,6 +11,7 @@ helm_release(
     name = "simple_app",
     chart = "//examples/local_chart:chart",  # Reference to a local chart
     namespace = "default",
+    kube_context = "minikube",
     release_name = "simple-app",  # Release names must use hyphens, not underscores
 )
 
@@ -21,6 +22,7 @@ helm_release(
     chart = "//examples/local_chart:chart",
     create_namespace = True,
     namespace = "staging",
+    kube_context = "minikube",
     values_file = ":custom-values.yaml",
     wait = True,
     release_name = "configured-app",  # Release names must use hyphens, not underscores
@@ -34,6 +36,7 @@ helm_release(
     chart = "//examples/local_chart:chart",
     create_namespace = True,
     namespace = "production",
+    kube_context = "prod-cluster",
     tags = [
         "manual",
         "production",

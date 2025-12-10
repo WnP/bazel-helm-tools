@@ -21,6 +21,7 @@ def create_helm_release_targets(
         repo_url = None,
         repo_name = None,
         chart_version = None,
+        kube_context = None,
         visibility = None,
         tags = None,
         kwargs = None):
@@ -60,7 +61,7 @@ def create_helm_release_targets(
         )
 
     # Validate inputs (pure functions, no mutations)
-    validations = _validate_inputs(release_name, namespace, timeout, chart, repo_url, repo_name, chart_version)
+    validations = _validate_inputs(release_name, namespace, timeout, chart, repo_url, repo_name, chart_version, kube_context)
     if not validations.valid:
         return struct(
             error = validations.error,
@@ -76,6 +77,7 @@ def create_helm_release_targets(
         repo_url = repo_url,
         repo_name = repo_name,
         chart_version = chart_version,
+        kube_context = kube_context,
     )
 
     # Build Helm arguments
@@ -107,7 +109,7 @@ def create_helm_release_targets(
         targets = targets,
     )
 
-def _validate_inputs(release_name, namespace, timeout, chart, repo_url, repo_name, chart_version):
+def _validate_inputs(release_name, namespace, timeout, chart, repo_url, repo_name, chart_version, kube_context):
     """Validates inputs using pure functions.
 
     Args:
@@ -118,10 +120,18 @@ def _validate_inputs(release_name, namespace, timeout, chart, repo_url, repo_nam
         repo_url: Repository URL to validate (optional)
         repo_name: Repository name reference (optional)
         chart_version: Chart version to validate (optional)
+        kube_context: Kubernetes context name to validate (mandatory)
 
     Returns:
         Struct with validation results (immutable)
     """
+
+    # Check kube_context is provided (mandatory parameter)
+    if not kube_context:
+        return struct(
+            valid = False,
+            error = "kube_context is required. Please provide the Kubernetes context name.",
+        )
 
     # Collect all validation results
     validations = [
@@ -150,7 +160,7 @@ def _validate_inputs(release_name, namespace, timeout, chart, repo_url, repo_nam
         error = join_errors(errors),
     )
 
-def _build_configuration(release_name, namespace, chart, timeout, repo_url, repo_name, chart_version):
+def _build_configuration(release_name, namespace, chart, timeout, repo_url, repo_name, chart_version, kube_context):
     """Builds immutable configuration struct.
 
     Pure function that creates configuration without side effects.
@@ -163,6 +173,7 @@ def _build_configuration(release_name, namespace, chart, timeout, repo_url, repo
         repo_url: Repository URL (optional)
         repo_name: Repository name reference (optional)
         chart_version: Chart version (optional)
+        kube_context: Kubernetes context name
 
     Returns:
         Immutable configuration struct
@@ -173,7 +184,7 @@ def _build_configuration(release_name, namespace, chart, timeout, repo_url, repo
         # If repo_name is a label, extract the repository name from it
         # For now, we'll pass it through and handle it in the command building
         resolved_repo_name = repo_name
-    
+
     return struct(
         release_name = release_name,
         namespace = namespace,
@@ -182,6 +193,7 @@ def _build_configuration(release_name, namespace, chart, timeout, repo_url, repo
         repo_url = repo_url or "",
         repo_name = resolved_repo_name,
         chart_version = chart_version or "",
+        kube_context = kube_context,
         is_repository_chart = bool(repo_url or repo_name),
     )
 

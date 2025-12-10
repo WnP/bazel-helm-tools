@@ -22,6 +22,7 @@ type Config struct {
 	RepoURL     string   `json:"repo_url,omitempty"`   // Direct repository URL
 	RepoName    string   `json:"repo_name,omitempty"`  // For repository add command
 	Namespace   string   `json:"namespace,omitempty"`
+	KubeContext string   `json:"kube_context,omitempty"`
 	Version     string   `json:"version,omitempty"`
 	ValuesFile  string   `json:"values_file,omitempty"`
 	Flags       []string `json:"flags,omitempty"`
@@ -420,6 +421,11 @@ func buildCommand(helmBinary string, config *Config, verbose bool) (*exec.Cmd, e
 
 		default:
 			return nil, fmt.Errorf("unknown command: %s", config.Command)
+		}
+
+		// Add kube-context for all release operations
+		if config.KubeContext != "" {
+			args = append(args, "--kube-context", config.KubeContext)
 		}
 
 		// Add common flags for install/upgrade

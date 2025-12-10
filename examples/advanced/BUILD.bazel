@@ -88,19 +88,21 @@ filegroup(
         atomic = atomic,
         chart = ":generated_chart",
         create_namespace = True,
+        kube_context = kube_context,
         namespace = env,
         tags = tags,
         values_file = ":values_" + env,
         wait = wait,
         release_name = env + "-deployment",  # Release names must use hyphens, not underscores
     )
-    for env, wait, timeout, atomic, tags in [
+    for env, wait, timeout, atomic, tags, kube_context in [
         (
             "dev",
             False,
             "2m",
             False,
             ["dev"],
+            "minikube",
         ),
         (
             "staging",
@@ -108,6 +110,7 @@ filegroup(
             "5m",
             False,
             ["staging"],
+            "staging-cluster",
         ),
         (
             "production",
@@ -118,6 +121,7 @@ filegroup(
                 "manual",
                 "production",
             ],
+            "prod-cluster",
         ),
     ]
 ]
@@ -128,6 +132,7 @@ helm_release(
     timeout = "5m",
     chart = "//examples/local_chart:chart",  # Reuse example chart
     create_namespace = True,
+    kube_context = "prod-cluster",
     namespace = "backend",
     release_name = "postgres",
     values_file = ":database-values.yaml",
@@ -138,6 +143,7 @@ helm_release(
     name = "cache",
     timeout = "3m",
     chart = "//examples/local_chart:chart",  # Reuse example chart
+    kube_context = "prod-cluster",
     namespace = "backend",
     release_name = "redis",
     values_file = ":cache-values.yaml",
@@ -148,6 +154,7 @@ helm_release(
     name = "application",
     timeout = "5m",
     chart = "//examples/local_chart:chart",  # Reuse example chart
+    kube_context = "prod-cluster",
     namespace = "backend",
     release_name = "webapp",
     values_file = ":application-values.yaml",

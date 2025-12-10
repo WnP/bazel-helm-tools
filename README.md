@@ -52,10 +52,11 @@ Use this module when you need reproducible Helm deployments with build-time vali
 
 - **Repository Chart Support**: Install charts from any Helm repository (public or private)
 - **Local Chart Management**: Deploy and manage charts from your repository
+- **Kubernetes Context Support**: Explicit `kube_context` parameter for precise control over which cluster receives deployments
 - **Platform-Aware Binary Management**: Automatic Helm binary selection
 - **Strongly-Typed Providers**: Type-safe configuration with validation
 - **Functional Programming**: Pure functions with immutable data structures
-- **Comprehensive Validation**: Validates release names, namespaces, versions
+- **Comprehensive Validation**: Validates release names, namespaces, versions, and Kubernetes contexts
 - **Multiple Operations**: Install, upgrade, uninstall, status, and values retrieval
 - **Module Extensions**: Configure Helm version via bzlmod
 - **Hermetic Builds**: Ensures reproducible deployments
@@ -162,6 +163,7 @@ helm_release(
     repo_name = ":prometheus_repo",  # Reference the repository
     chart_version = "51.3.0",  # Pin specific version
     namespace = "monitoring",
+    kube_context = "prod-cluster",  # Required: Kubernetes context
     values_file = ":prometheus-values.yaml",
 )
 ```
@@ -220,6 +222,7 @@ helm_release(
     repo_name = ":prometheus_repo",  # Reference the repository
     chart_version = "51.3.0",
     namespace = "monitoring",
+    kube_context = "prod-cluster",
     values_file = ":prometheus-values.yaml",
     create_namespace = True,
 )
@@ -230,6 +233,7 @@ helm_release(
     repo_name = ":nginx_repo",  # Reference the repository
     chart_version = "4.7.1",
     namespace = "ingress-nginx",
+    kube_context = "prod-cluster",
     create_namespace = True,
     wait = True,
 )
@@ -240,6 +244,7 @@ helm_release(
     repo_name = ":bitnami_repo",  # Reference the repository
     chart_version = "13.2.10",
     namespace = "database",
+    kube_context = "prod-cluster",
     values_file = ":postgres-config.yaml",
     wait = True,
     timeout = "10m",
@@ -263,6 +268,7 @@ helm_release(
     repo_name = ":private_repo",
     chart_version = "2.1.0",
     namespace = "production",
+    kube_context = "prod-cluster",
 )
 ```
 
@@ -278,6 +284,7 @@ helm_release(
     repo_url = "oci://ghcr.io/organization/charts",  # Direct OCI URL
     chart_version = "1.0.0",
     namespace = "default",
+    kube_context = "staging-cluster",
     values_file = ":oci-values.yaml",
 )
 
@@ -288,6 +295,7 @@ helm_release(
     repo_url = "file:///path/to/local/repo",  # Direct file URL
     chart_version = "0.1.0",
     namespace = "dev",
+    kube_context = "minikube",
 )
 ```
 
@@ -304,6 +312,7 @@ helm_release(
     name = "webapp",
     chart = "//services/webapp/chart",  # Path to local chart directory
     namespace = "web",
+    kube_context = "prod-cluster",
     values_file = "//services/webapp:prod-values.yaml",
     wait = True,
     timeout = "5m",
@@ -344,6 +353,7 @@ helm_release(
     name = "production_app",
     chart = "//charts/application",
     namespace = "production",
+    kube_context = "prod-cluster",
     values_file = ":generate_values",  # Use generated values
     create_namespace = True,
     wait = True,
@@ -373,6 +383,7 @@ helm_release(
     name = "my_app",
     chart = ":my_chart",  # Archive has Chart.yaml at root
     namespace = "default",
+    kube_context = "staging-cluster",
 )
 
 # Pattern 2: Chart is in a subdirectory - use sparse_paths!
@@ -388,6 +399,7 @@ helm_release(
     name = "cilium",
     chart = ":cilium_repo",  # Archive has Chart.yaml at root!
     namespace = "kube-system",
+    kube_context = "prod-cluster",
     values_file = ":cilium-values.yaml",
 )
 ```
@@ -414,6 +426,7 @@ helm_release(
     name = "private_app",
     chart = ":private_charts",  # Chart.yaml at archive root
     namespace = "production",
+    kube_context = "prod-cluster",
     values_file = ":prod-values.yaml",
     create_namespace = True,
     wait = True,
@@ -435,6 +448,7 @@ helm_release(
     name = "nginx_from_archive",
     chart = ":extract_chart/bitnami/nginx",
     namespace = "web-archive",
+    kube_context = "staging-cluster",
     values_file = ":nginx-values.yaml",
 )
 ```
@@ -497,7 +511,7 @@ helm_release(
 ```starlark
 helm_release(name, chart, values_file, namespace, create_namespace,
              release_name, wait, timeout, atomic, force, repo_url,
-             repo_name, chart_version, visibility, tags, **kwargs)
+             repo_name, chart_version, kube_context, visibility, tags, **kwargs)
 ```
 
 Creates targets for managing a Helm release following functional programming principles.
@@ -521,6 +535,7 @@ Creates targets for managing a Helm release following functional programming pri
 |-----------|------|---------|----------|-------------|
 | name | string | - | Yes | Base name for generated targets |
 | chart | string/label | - | Yes | Chart name or path to local chart |
+| kube_context | string | - | **Yes** | Kubernetes context name for all operations |
 | values_file | label | None | No | Values YAML file |
 | namespace | string | "default" | No | Kubernetes namespace |
 | create_namespace | bool | True | No | Create namespace if missing |
@@ -548,6 +563,7 @@ helm_release(
     name = "webapp",
     chart = "//charts/webapp",
     namespace = "web",
+    kube_context = "staging-cluster",
     values_file = ":custom_values.yaml",
 )
 
@@ -563,6 +579,7 @@ helm_release(
     repo_name = ":bitnami",  # Reference the repository
     chart_version = "13.2.10",
     namespace = "web",
+    kube_context = "prod-cluster",
 )
 
 # OCI registry (direct)
@@ -572,6 +589,7 @@ helm_release(
     repo_url = "oci://ghcr.io/org/charts",  # Direct OCI URL
     chart_version = "1.0.0",
     namespace = "production",
+    kube_context = "prod-cluster",
 )
 ```
 
@@ -698,15 +716,17 @@ helm_release(
 
 ## Best Practices
 
-1. **Local Charts**: Keep charts in your repository for version control and reproducibility
-2. **Values Files**: Store environment-specific values in separate YAML files
-3. **Namespace Isolation**: Use different namespaces for different environments
-4. **Atomic Deployments**: Use `atomic = True` for production deployments
-5. **Timeouts**: Set appropriate timeouts based on chart complexity
-6. **Validation**: Use the provided validation functions in custom rules
-7. **Testing**: Test charts locally before deploying to production
-8. **Documentation**: Document your charts and their configuration options
-9. **Repository Integration**: Use built-in repository support for external charts, with secure authentication and version management
+1. **Kubernetes Context**: Always explicitly specify `kube_context` - it's mandatory and ensures deployments target the correct cluster
+2. **Local Charts**: Keep charts in your repository for version control and reproducibility
+3. **Values Files**: Store environment-specific values in separate YAML files
+4. **Namespace Isolation**: Use different namespaces for different environments
+5. **Atomic Deployments**: Use `atomic = True` for production deployments
+6. **Timeouts**: Set appropriate timeouts based on chart complexity
+7. **Context Management**: Use different contexts for different environments (e.g., `staging-cluster`, `prod-cluster`)
+8. **Validation**: Use the provided validation functions in custom rules
+9. **Testing**: Test charts locally before deploying to production
+10. **Documentation**: Document your charts and their configuration options
+11. **Repository Integration**: Use built-in repository support for external charts, with secure authentication and version management
 
 ## Contributing
 

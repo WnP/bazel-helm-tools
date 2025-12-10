@@ -28,6 +28,7 @@ helm_release(
     chart = "nginx",
     chart_version = "13.2.10",
     create_namespace = True,
+    kube_context = "staging-cluster",
     namespace = "web",
     repo_name = ":bitnami_repo",  # Reference the repository
     wait = True,
@@ -40,6 +41,7 @@ helm_release(
     atomic = True,
     chart = "kube-prometheus-stack",
     create_namespace = True,
+    kube_context = "prod-cluster",
     namespace = "monitoring",
     repo_name = ":prometheus_repo",  # Reference the repository
     wait = True,
@@ -51,6 +53,7 @@ helm_release(
     chart = "ingress-nginx",
     chart_version = "4.4.0",
     create_namespace = True,
+    kube_context = "prod-cluster",
     namespace = "ingress-nginx",
     repo_name = ":nginx_ingress_repo",  # Reference the repository
     wait = True,
@@ -63,6 +66,7 @@ helm_release(
     chart = "postgresql",
     chart_version = "12.1.9",
     create_namespace = True,
+    kube_context = "prod-cluster",
     namespace = "database",
     repo_name = ":bitnami_repo",  # Reference the repository
     values_file = ":postgres-values.yaml",
@@ -76,6 +80,7 @@ helm_release(
     chart_version = "17.3.14",
     create_namespace = True,
     force = True,  # Force resource updates
+    kube_context = "prod-cluster",
     namespace = "cache",
     repo_name = ":bitnami_repo",  # Reference the repository
     wait = True,
@@ -87,6 +92,7 @@ helm_release(
     chart = "my-chart",
     repo_url = "oci://ghcr.io/example/charts",  # OCI URLs work directly
     chart_version = "1.0.0",
+    kube_context = "staging-cluster",
     namespace = "production",
     wait = True,
 )
@@ -95,6 +101,7 @@ helm_release(
 helm_release(
     name = "local-app",
     chart = "//examples/local_chart:chart",  # Local path
+    kube_context = "minikube",
     namespace = "default",
     values_file = ":local-app-values.yaml",
     wait = True,
